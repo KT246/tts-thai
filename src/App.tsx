@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Volume2, Download, Loader2, PlayCircle, Settings } from "lucide-react";
 
-const API_BASE_URL = "https://c796e4668ced.ngrok-free.app/";
+// CẬP NHẬT: Đã xóa dấu gạch chéo (/) ở cuối để tránh lỗi đường dẫn đôi
+const API_BASE_URL = "https://c796e4668ced.ngrok-free.app";
 
 // Định nghĩa kiểu dữ liệu cho Giọng đọc
 interface Voice {
@@ -32,7 +33,14 @@ export default function ThaiTTSApp() {
   useEffect(() => {
     const fetchVoices = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/voices`);
+        // CẬP NHẬT: Thêm header để vượt qua trang cảnh báo của Ngrok
+        const res = await fetch(`${API_BASE_URL}/voices`, {
+          headers: {
+            "ngrok-skip-browser-warning": "true",
+            "Content-Type": "application/json",
+          },
+        });
+
         if (!res.ok) throw new Error("Không thể kết nối đến Server");
 
         // Ép kiểu dữ liệu trả về
@@ -45,7 +53,7 @@ export default function ThaiTTSApp() {
       } catch (err: any) {
         console.error("Lỗi tải giọng:", err);
         setError(
-          "Không thể tải danh sách giọng đọc. Hãy đảm bảo Backend đang chạy tại cổng 8000."
+          "Không thể tải danh sách giọng đọc. Kiểm tra lại ngrok hoặc server."
         );
 
         // Mock data
@@ -81,7 +89,12 @@ export default function ThaiTTSApp() {
         rate: ratePercent.toString(),
       });
 
-      const response = await fetch(`${API_BASE_URL}/tts?${params}`);
+      // CẬP NHẬT: Thêm header ở đây nữa
+      const response = await fetch(`${API_BASE_URL}/tts?${params}`, {
+        headers: {
+          "ngrok-skip-browser-warning": "true",
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`Lỗi Server: ${response.statusText}`);
@@ -89,6 +102,9 @@ export default function ThaiTTSApp() {
 
       const data: TTSResponse = await response.json();
       const generatedFileName = data.file;
+
+      // Đường dẫn tải về cũng cần bypass nếu fetch trực tiếp, nhưng với thẻ audio src thì trình duyệt sẽ tự xử lý
+      // Tuy nhiên, tốt nhất là dùng URL từ ngrok
       const url = `${API_BASE_URL}/download/${generatedFileName}`;
 
       setFileName(generatedFileName);
