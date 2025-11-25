@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Volume2, Download, Loader2, PlayCircle, Settings } from "lucide-react";
 
 // CẬP NHẬT: Đã xóa dấu gạch chéo (/) ở cuối để tránh lỗi đường dẫn đôi
-const API_BASE_URL = "https://c796e4668ced.ngrok-free.app";
+const API_BASE_URL = "https://e5faca3dd84e.ngrok-free.app";
 
 // Định nghĩa kiểu dữ liệu cho Giọng đọc
 interface Voice {
