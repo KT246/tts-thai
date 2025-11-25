@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Volume2, Download, Loader2, PlayCircle, Settings } from "lucide-react";
+import {
+  Volume2,
+  Download,
+  Loader2,
+  PlayCircle,
+  Settings,
+  Music,
+} from "lucide-react";
 
 // CẬP NHẬT: Đã xóa dấu gạch chéo (/) ở cuối để tránh lỗi đường dẫn đôi
 const API_BASE_URL = "https://cb190fe3151b.ngrok-free.app";
@@ -20,7 +27,11 @@ export default function ThaiTTSApp() {
   const [voices, setVoices] = useState<Voice[]>([]);
   const [selectedVoice, setSelectedVoice] = useState<string>("");
   const [text, setText] = useState<string>("");
+
+  // State cho Tốc độ và Cao độ
   const [rate, setRate] = useState<number>(1.0); // Giá trị hiển thị 1x
+  const [pitch, setPitch] = useState<number>(0); // Giá trị mặc định 0 (bình thường)
+
   const [loading, setLoading] = useState<boolean>(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string>("");
@@ -33,7 +44,6 @@ export default function ThaiTTSApp() {
   useEffect(() => {
     const fetchVoices = async () => {
       try {
-        // CẬP NHẬT: Thêm header để vượt qua trang cảnh báo của Ngrok
         const res = await fetch(`${API_BASE_URL}/voices`, {
           headers: {
             "ngrok-skip-browser-warning": "true",
@@ -43,7 +53,6 @@ export default function ThaiTTSApp() {
 
         if (!res.ok) throw new Error("Không thể kết nối đến Server");
 
-        // Ép kiểu dữ liệu trả về
         const data: Voice[] = await res.json();
         setVoices(data);
 
@@ -80,16 +89,17 @@ export default function ThaiTTSApp() {
     setError("");
 
     try {
-      // Công thức chuyển đổi: (Hệ số - 1) * 100
+      // Công thức chuyển đổi Rate: (Hệ số - 1) * 100
       const ratePercent = Math.round((rate - 1) * 100);
 
+      // Tạo params gửi đi
       const params = new URLSearchParams({
         text: text.trim(),
         voice: selectedVoice,
         rate: ratePercent.toString(),
+        pitch: pitch.toString(), // Thêm tham số Pitch vào đây
       });
 
-      // CẬP NHẬT: Thêm header ở đây nữa
       const response = await fetch(`${API_BASE_URL}/tts?${params}`, {
         headers: {
           "ngrok-skip-browser-warning": "true",
@@ -103,8 +113,6 @@ export default function ThaiTTSApp() {
       const data: TTSResponse = await response.json();
       const generatedFileName = data.file;
 
-      // Đường dẫn tải về cũng cần bypass nếu fetch trực tiếp, nhưng với thẻ audio src thì trình duyệt sẽ tự xử lý
-      // Tuy nhiên, tốt nhất là dùng URL từ ngrok
       const url = `${API_BASE_URL}/download/${generatedFileName}`;
 
       setFileName(generatedFileName);
@@ -126,13 +134,17 @@ export default function ThaiTTSApp() {
     }
   };
 
-  // Các hàm xử lý sự kiện input có định nghĩa kiểu
+  // Các hàm xử lý sự kiện input
   const handleVoiceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedVoice(e.target.value);
   };
 
   const handleRateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setRate(parseFloat(e.target.value));
+  };
+
+  const handlePitchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPitch(parseFloat(e.target.value));
   };
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -155,7 +167,7 @@ export default function ThaiTTSApp() {
         <div className="p-6 space-y-6">
           {/* Controls Area */}
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
-            {/* Chọn giọng */}
+            {/* 1. Chọn giọng */}
             <div>
               <label className="block text-sm font-semibold text-slate-600 mb-2 flex items-center gap-2">
                 <Volume2 size={16} /> Chọn giọng đọc:
@@ -177,29 +189,60 @@ export default function ThaiTTSApp() {
               </select>
             </div>
 
-            {/* Chỉnh tốc độ */}
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="text-sm font-semibold text-slate-600 flex items-center gap-2">
-                  <Settings size={16} /> Tốc độ đọc:
-                </label>
-                <span className="text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded text-sm">
-                  {rate}x
-                </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* 2. Chỉnh tốc độ (Rate) */}
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-sm font-semibold text-slate-600 flex items-center gap-2">
+                    <Settings size={16} /> Tốc độ:
+                  </label>
+                  <span className="text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded text-xs">
+                    {rate}x
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0.5"
+                  max="3"
+                  step="0.1"
+                  value={rate}
+                  onChange={handleRateChange}
+                  className="w-full h-2 bg-slate-300 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                />
               </div>
-              <input
-                type="range"
-                min="0.5"
-                max="3"
-                step="0.1"
-                value={rate}
-                onChange={handleRateChange}
-                className="w-full h-2 bg-slate-300 rounded-lg appearance-none cursor-pointer accent-blue-600"
-              />
-              <div className="flex justify-between text-xs text-slate-400 mt-1">
-                <span>0.5x (Chậm)</span>
-                <span>3.0x (Nhanh)</span>
+
+              {/* 3. Chỉnh cao độ (Pitch) - MỚI */}
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-sm font-semibold text-slate-600 flex items-center gap-2">
+                    <Music size={16} /> Cao độ:
+                  </label>
+                  <span
+                    className={`font-bold px-2 py-0.5 rounded text-xs ${
+                      pitch === 0
+                        ? "text-slate-500 bg-slate-100"
+                        : "text-indigo-600 bg-indigo-50"
+                    }`}
+                  >
+                    {pitch > 0 ? `+${pitch}` : pitch}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="-20"
+                  max="20"
+                  step="1"
+                  value={pitch}
+                  onChange={handlePitchChange}
+                  className="w-full h-2 bg-slate-300 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                />
               </div>
+            </div>
+
+            {/* Chú thích nhỏ cho thanh trượt */}
+            <div className="flex justify-between text-xs text-slate-400">
+              <span>Trầm / Chậm</span>
+              <span>Cao / Nhanh</span>
             </div>
           </div>
 
