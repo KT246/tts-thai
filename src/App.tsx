@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 
 // CẬP NHẬT: Đã xóa dấu gạch chéo (/) ở cuối để tránh lỗi đường dẫn đôi
-const API_BASE_URL = "https://ced22d2c8c41.ngrok-free.app";
+const API_BASE_URL = "https://750937b2e6d0.ngrok-free.app";
 
 // Định nghĩa kiểu dữ liệu cho Giọng đọc
 interface Voice {
