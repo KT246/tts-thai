@@ -6,23 +6,28 @@ import {
   PlayCircle,
   Settings,
   Music,
+  AlertCircle,
 } from "lucide-react";
 
-// CẬP NHẬT: Đã xóa dấu gạch chéo (/) ở cuối để tránh lỗi đường dẫn đôi
-const API_BASE_URL = "https://f2e7f3079418.ngrok-free.app";
+// CẤU HÌNH SERVER:
+// Nếu chạy local python server.py -> dùng http://localhost:8000
+// Nếu dùng Ngrok -> dán link Ngrok vào đây (bỏ dấu / ở cuối)
+const API_BASE_URL = "https://432b6e98822c.ngrok-free.app";
 
 // Định nghĩa kiểu dữ liệu cho Giọng đọc
 interface Voice {
   id: string;
   name: string;
+  gender?: string;
 }
 
 // Định nghĩa kiểu dữ liệu phản hồi từ API TTS
 interface TTSResponse {
   file: string;
+  message: string;
 }
 
-export default function ThaiTTSApp() {
+export default function App() {
   // State quản lý dữ liệu với kiểu cụ thể
   const [voices, setVoices] = useState<Voice[]>([]);
   const [selectedVoice, setSelectedVoice] = useState<string>("");
@@ -30,7 +35,7 @@ export default function ThaiTTSApp() {
 
   // State cho Tốc độ và Cao độ
   const [rate, setRate] = useState<number>(1.0); // Giá trị hiển thị 1x
-  const [pitch, setPitch] = useState<number>(0); // Giá trị mặc định 0 (bình thường)
+  const [pitch, setPitch] = useState<number>(0); // Giá trị mặc định 0Hz
 
   const [loading, setLoading] = useState<boolean>(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -56,21 +61,36 @@ export default function ThaiTTSApp() {
         const data: Voice[] = await res.json();
         setVoices(data);
 
+        // Tự động chọn giọng đầu tiên nếu có
         if (data.length > 0) {
           setSelectedVoice(data[0].id);
         }
       } catch (err: any) {
         console.error("Lỗi tải giọng:", err);
         setError(
-          "Không thể tải danh sách giọng đọc. Kiểm tra lại ngrok hoặc server."
+          "Không thể kết nối tới Server (localhost:8000). Hãy chắc chắn bạn đã chạy file server.py"
         );
 
-        // Mock data
-        setVoices([
-          { id: "th-TH-Standard-A", name: "Thai Female (Standard A)" },
-          { id: "th-TH-Standard-B", name: "Thai Male (Standard B)" },
-        ]);
-        setSelectedVoice("th-TH-Standard-A");
+        // Mock data khớp với server để test giao diện
+        const mockVoices = [
+          {
+            id: "th-TH-PremwadeeNeural",
+            name: "Premwadee (Nữ - Dịu dàng)",
+            gender: "Female",
+          },
+          {
+            id: "th-TH-NiwatNeural",
+            name: "Niwat (Nam - Trầm ấm)",
+            gender: "Male",
+          },
+          {
+            id: "th-TH-SomsakNeural",
+            name: "Somsak (Nam - Trầm ấm)",
+            gender: "Male",
+          },
+        ];
+        setVoices(mockVoices);
+        setSelectedVoice(mockVoices[0].id);
       }
     };
 
@@ -90,6 +110,7 @@ export default function ThaiTTSApp() {
 
     try {
       // Công thức chuyển đổi Rate: (Hệ số - 1) * 100
+      // Ví dụ: 1.5x -> +50%, 0.8x -> -20%
       const ratePercent = Math.round((rate - 1) * 100);
 
       // Tạo params gửi đi
@@ -97,7 +118,7 @@ export default function ThaiTTSApp() {
         text: text.trim(),
         voice: selectedVoice,
         rate: ratePercent.toString(),
-        pitch: pitch.toString(), // Thêm tham số Pitch vào đây
+        pitch: pitch.toString(),
       });
 
       const response = await fetch(`${API_BASE_URL}/tts?${params}`, {
@@ -107,7 +128,10 @@ export default function ThaiTTSApp() {
       });
 
       if (!response.ok) {
-        throw new Error(`Lỗi Server: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.detail || `Lỗi Server: ${response.statusText}`
+        );
       }
 
       const data: TTSResponse = await response.json();
@@ -123,7 +147,7 @@ export default function ThaiTTSApp() {
         if (audioRef.current) {
           audioRef.current
             .play()
-            .catch((e) => console.log("Autoplay bị chặn:", e));
+            .catch((e) => console.log("Autoplay bị chặn hoặc lỗi:", e));
         }
       }, 100);
     } catch (err: any) {
@@ -211,7 +235,7 @@ export default function ThaiTTSApp() {
                 />
               </div>
 
-              {/* 3. Chỉnh cao độ (Pitch) - MỚI */}
+              {/* 3. Chỉnh cao độ (Pitch) */}
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <label className="text-sm font-semibold text-slate-600 flex items-center gap-2">
@@ -224,7 +248,7 @@ export default function ThaiTTSApp() {
                         : "text-indigo-600 bg-indigo-50"
                     }`}
                   >
-                    {pitch > 0 ? `+${pitch}` : pitch}
+                    {pitch > 0 ? `+${pitch}Hz` : `${pitch}Hz`}
                   </span>
                 </div>
                 <input
@@ -240,7 +264,7 @@ export default function ThaiTTSApp() {
             </div>
 
             {/* Chú thích nhỏ cho thanh trượt */}
-            <div className="flex justify-between text-xs text-slate-400">
+            <div className="flex justify-between text-xs text-slate-400 px-1">
               <span>Trầm / Chậm</span>
               <span>Cao / Nhanh</span>
             </div>
@@ -273,15 +297,16 @@ export default function ThaiTTSApp() {
               </>
             ) : (
               <>
-                <PlayCircle /> Generate Speech
+                <PlayCircle /> Tạo Giọng Nói
               </>
             )}
           </button>
 
           {/* Error Message */}
           {error && (
-            <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-200 text-center">
-              {error}
+            <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-200 flex items-start gap-2">
+              <AlertCircle size={18} className="shrink-0 mt-0.5" />
+              <span>{error}</span>
             </div>
           )}
 
@@ -297,6 +322,11 @@ export default function ThaiTTSApp() {
                 controls
                 src={audioUrl}
                 className="w-full mb-4 accent-blue-600"
+                onError={() =>
+                  setError(
+                    "Không thể tải file âm thanh. Link có thể đã hết hạn."
+                  )
+                }
               >
                 Trình duyệt không hỗ trợ phát âm thanh.
               </audio>
@@ -304,6 +334,8 @@ export default function ThaiTTSApp() {
               <a
                 href={audioUrl}
                 download={`thai_speech_${fileName}`}
+                target="_blank"
+                rel="noreferrer"
                 className="flex items-center justify-center gap-2 w-full py-2.5 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition shadow-sm"
               >
                 <Download size={18} /> Tải file MP3
