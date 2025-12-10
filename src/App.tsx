@@ -12,7 +12,7 @@ import {
 // CẤU HÌNH SERVER:
 // Nếu chạy local python server.py -> dùng http://localhost:8000
 // Nếu dùng Ngrok -> dán link Ngrok vào đây (bỏ dấu / ở cuối)
-const API_BASE_URL = "https://432b6e98822c.ngrok-free.app";
+const API_BASE_URL = "https://a39414d46208.ngrok-free.app";
 
 // Định nghĩa kiểu dữ liệu cho Giọng đọc
 interface Voice {
