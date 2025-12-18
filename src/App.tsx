@@ -14,7 +14,7 @@ import {
 // 1. Chạy server.py trên máy tính: python server.py
 // 2. Dùng ngrok để public port 8000: ngrok http 8000
 // 3. Copy link https từ ngrok dán vào dưới đây (bỏ dấu / ở cuối)
-const API_BASE_URL = "https://ffdf2e2bbaaf.ngrok-free.app";
+const API_BASE_URL = "https://ce0fea7b61f2.ngrok-free.app";
 
 // Định nghĩa kiểu dữ liệu cho Giọng đọc
 interface Voice {
