@@ -14,7 +14,7 @@ import {
 // 1. Chạy server.py trên máy tính: python server.py
 // 2. Dùng ngrok để public port 8000: ngrok http 8000
 // 3. Copy link https từ ngrok dán vào dưới đây (bỏ dấu / ở cuối)
-const API_BASE_URL = "https://7b035d77d760.ngrok-free.app";
+const API_BASE_URL = "https://e67feb47324a.ngrok-free.app";
 
 // Định nghĩa kiểu dữ liệu cho Giọng đọc
 interface Voice {
@@ -297,7 +297,7 @@ export default function App() {
               ${
                 loading || !text.trim()
                   ? "bg-slate-400 cursor-not-allowed shadow-none"
-                  : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg hover:-translate-y-0.5"
+                  : "bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg hover:-translate-y-0.5"
               }`}
           >
             {loading ? (
